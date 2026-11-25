@@ -1,0 +1,56 @@
+{
+  "name": "@pymite6941/tracker",
+  "version": "0.1.0",
+  "description": "Find and resume your AI coding-agent sessions (Claude Code, Codex, Gemini CLI, Qwen Code, Hermes, or any agent you configure) by keyword or recency, from one CLI/TUI.",
+  "type": "module",
+  "bin": {
+    "tracker": "bin/tracker.js",
+    "trk": "bin/tracker.js"
+  },
+  "exports": {
+    ".": "./src/lib.js"
+  },
+  "files": [
+    "bin/",
+    "src/",
+    "assets/logo.svg",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "test": "node --test --test-reporter=spec test/tracker.test.js",
+    "start": "node bin/tracker.js"
+  },
+  "engines": {
+    "node": ">=22.13"
+  },
+  "keywords": [
+    "claude",
+    "claude-code",
+    "codex",
+    "gemini-cli",
+    "qwen-code",
+    "hermes",
+    "ai",
+    "agent",
+    "coding-agent",
+    "session",
+    "resume",
+    "history",
+    "cli",
+    "tui"
+  ],
+  "author": "PyMite6941",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/PyMite6941/tracker.git"
+  },
+  "homepage": "https://pymite6941.github.io/tracker/",
+  "bugs": {
+    "url": "https://github.com/PyMite6941/tracker/issues"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

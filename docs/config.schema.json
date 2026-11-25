@@ -1,0 +1,53 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://pymite6941.github.io/tracker/config.schema.json",
+  "title": "tracker config",
+  "type": "object",
+  "properties": {
+    "$schema": { "type": "string" },
+    "disable": {
+      "description": "Built-in agents to turn off.",
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "agents": {
+      "description": "Extra agents, or replacements for built-ins (same name).",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["name", "format", "resume"],
+        "properties": {
+          "name": { "type": "string", "pattern": "^[A-Za-z0-9._:@+-]+$" },
+          "label": { "type": "string" },
+          "format": { "enum": ["jsonl", "json", "sqlite"] },
+          "glob": { "type": "string", "description": "File agents: where session files live. Supports *, ?, **, ~, ${VAR}, %VAR%." },
+          "db": { "type": "string", "description": "SQLite agents: database path." },
+          "query": { "type": "string", "description": "SQLite agents: SELECT returning id (+ title, cwd, started_at, updated_at, messages, first_prompt, last_prompt, text, model)." },
+          "fields": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "string" }, "cwd": { "type": "string" }, "title": { "type": "string" },
+              "timestamp": { "type": "string" }, "startedAt": { "type": "string" }, "updatedAt": { "type": "string" },
+              "model": { "type": "string" }, "role": { "type": "string" }, "text": { "type": "string" },
+              "messages": { "type": "string" },
+              "userRole": { "oneOf": [{ "type": "string" }, { "type": "array", "items": { "type": "string" } }] }
+            },
+            "additionalProperties": false
+          },
+          "resume": {
+            "type": "object",
+            "required": ["command"],
+            "properties": {
+              "command": { "type": "string" },
+              "args": { "type": "array", "items": { "type": "string" } },
+              "cwd": { "type": "string" }
+            }
+          }
+        },
+        "allOf": [
+          { "if": { "properties": { "format": { "const": "sqlite" } } }, "then": { "required": ["db", "query"] }, "else": { "required": ["glob"] } }
+        ]
+      }
+    }
+  }
+}

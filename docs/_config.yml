@@ -1,0 +1,17 @@
+title: tracker
+description: Find and resume your AI coding-agent sessions by keyword or recency.
+remote_theme: just-the-docs/just-the-docs@v0.10.1
+plugins:
+  - jekyll-remote-theme
+logo: /assets/logo.svg
+favicon_ico: /assets/logo.svg
+color_scheme: dark
+search_enabled: true
+heading_anchors: true
+aux_links:
+  GitHub: https://github.com/PyMite6941/tracker
+  npm: https://www.npmjs.com/package/@pymite6941/tracker
+aux_links_new_tab: true
+footer_content: MIT licensed. tracker only reads local files, and nothing leaves your machine.
+baseurl: /tracker
+url: https://pymite6941.github.io
