@@ -8,7 +8,7 @@
   Find and resume your AI coding-agent sessions by keyword or recency, across every agent, from one CLI/TUI.
   <br>
   <a href="https://pymite6941.github.io/tracker/">Documentation</a> ·
-  <a href="https://www.npmjs.com/package/@pymite6941/tracker">npm</a> ·
+  <a href="https://www.npmjs.com/package/@clyde-ai/tracker">npm</a> ·
   <a href="https://github.com/PyMite6941/tracker/issues">Issues</a>
 </p>
 
@@ -17,25 +17,26 @@
 You've had forty Claude Code, OpenCode, Cursor, Aider and Hermes sessions this week, spread across twenty folders. You remember *what* you were doing ("the stripe webhook thing") but not *where* or *which agent*. `tracker` reads each agent's own session store, indexes them, and drops you back into the right one, in the right directory, with one keystroke.
 
 ```text
- tracker 12/202 sessions                                    agent:all  folder:any  sort:relevance
- ❯ stripe webhook
-──────────────────────────────────────────────────────────────────────────────────────────────
- ▸ claude  2h ago   Stripe refund webhook                              …/work/payments-api
-   codex   3d ago   Verify webhook signatures in middleware            …/work/payments-api
-   hermes  9d ago   Plan Stripe → Paddle migration                     …/work/billing
-──────────────────────────────────────────────────────────────────────────────────────────────
- Stripe refund webhook
- claude · 3f1c…e2 · 48 msgs · claude-opus-5-5
- dir   ~/work/payments-api
- first Add a Stripe webhook handler for refunds
- last  now write tests for it
- ↑↓ move · Enter resume · Tab agent · ^F this folder · ^S sort · ^O print cmd · Esc quit
+ ◆ tracker  3 of 202 sessions               agent all  date last 30d  folder any  sort relevance
+  ❯ stripe webhook                                                                          1/3
+ ───────────────────────────────────────────────────────────────────────────────────────────────
+ ▌ ● claude     2h ago   Stripe refund webhook                          …/work/payments-api
+   ● codex      3d ago   Verify webhook signatures in middleware        …/work/payments-api
+   ● hermes     9d ago   Plan Stripe → Paddle migration                 …/work/billing
+ ╭─ Stripe refund webhook ─────────────────────────────────────────────────────────────────────╮
+ │ ● claude  ·  48 msgs  ·  2h ago  ·  claude-opus-5-5                                          │
+ │ folder ~/work/payments-api                                                                   │
+ │ first  Add a Stripe webhook handler for refunds                                              │
+ │ last   now write tests for it                                                                │
+ │ id     3f1c9a2e-…                                                                            │
+ ╰──────────────────────────────────────────────────────────────────────────────────────────────╯
+  ↑↓ move   ⏎ resume   ⇥ agent   ^T date   ^F folder   ^S sort   ^O print   esc quit
 ```
 
 ## Install
 
 ```sh
-npm install -g @pymite6941/tracker     # gives you `tracker` (and the short alias `trk`)
+npm install -g @clyde-ai/tracker     # gives you `tracker` (and the short alias `trk`)
 ```
 
 Requires Node.js **22.13+** (it uses the built-in `node:sqlite`). No other dependencies.
@@ -53,7 +54,7 @@ Requires Node.js **22.13+** (it uses the built-in `node:sqlite`). No other depen
 | `tracker show <id \| words>` | Details, first/last prompt and the exact resume command. |
 | `tracker agents` | Which agents were found, where, and how many sessions each has. |
 
-Useful flags: `-a claude,codex` (only these agents), `-H` (only sessions from this folder), `--deep` (also search assistant replies and tool output), `--print` (show the resume command instead of running it), `--json`.
+Useful flags: `-a claude,codex` (only these agents), `-H` (only sessions from this folder), `--since 7d` / `--today` (only recent sessions; `^T` in the picker), `--deep` (also search assistant replies and tool output), `--print` (show the resume command instead of running it), `--json`.
 
 ## Supported agents
 
@@ -102,7 +103,7 @@ See the [custom agents guide](https://pymite6941.github.io/tracker/custom-agents
 ## Programmatic use
 
 ```js
-import { sessions } from '@pymite6941/tracker';
+import { sessions } from '@clyde-ai/tracker';
 const [best] = sessions({ query: 'stripe webhook' });
 console.log(best.title, best.resume); // "Stripe refund webhook", "cd … && claude --resume …"
 ```

@@ -8,7 +8,7 @@ nav_order: 7
 tracker is also an ES module you can import.
 
 ```js
-import { sessions, resumeSpec, run, loadAgents } from '@pymite6941/tracker';
+import { sessions, resumeSpec, run, loadAgents } from '@clyde-ai/tracker';
 
 // Newest first, every detected agent.
 const all = sessions();

@@ -14,6 +14,7 @@ import { cleanPrompt } from '../src/agents/common.js';
 import { fit, strWidth, glob, toMs, isUnder } from '../src/util.js';
 import { parseKeys, pick } from '../src/tui.js';
 import { parseArgs } from '../src/cli.js';
+import { sinceMs, filterSince } from '../src/dates.js';
 
 const BIN = fileURLToPath(new URL('../bin/tracker.js', import.meta.url));
 let H;
@@ -242,7 +243,8 @@ test('TUI: type, move, Enter resumes the highlighted session', async () => {
   const stdout = Object.assign(new EventEmitter(), { columns: 100, rows: 30, write: (s) => { screen += s; } });
   const p = pick(sessions, { stdin, stdout });
   stdin.emit('data', Buffer.from('pay'));     // every session in the payments-api folder
-  assert.match(screen, /4\/9 sessions/);
+  assert.match(screen, /4 of 9 sessions/);
+  assert.match(screen, /1\/4/); // cursor position
   stdin.emit('data', Buffer.from('\x1b[B'));  // down
   stdin.emit('data', Buffer.from('\r'));
   const res = await p;
@@ -257,7 +259,7 @@ test('TUI: Tab filters by agent, Esc quits', async () => {
   const stdout = Object.assign(new EventEmitter(), { columns: 100, rows: 30, write: (s) => { screen += s; } });
   const p = pick(sessions, { stdin, stdout });
   stdin.emit('data', Buffer.from('\t'));
-  assert.match(screen, /1\/9 sessions +agent:aider/); // agents cycle alphabetically
+  assert.match(screen, /1 of 9 sessions +agent:aider/); // agents cycle alphabetically
   stdin.emit('data', Buffer.from('\x1b'));
   assert.equal((await p).action, 'quit');
 });
@@ -277,4 +279,40 @@ test('helpers', () => {
   assert.equal(isUnder(path.join(H.root, 'work', 'website'), path.join(H.root, 'work', 'web')), false);
   assert.equal(isUnder(path.join(H.root, 'work', 'web', 'src'), path.join(H.root, 'work', 'web')), true);
   assert.equal(isUnder(H.web, H.web + path.sep), true);
+});
+
+test('dates: --since specs and the ^T date filter', async () => {
+  const now = new Date(2026, 10, 25, 15, 30).getTime(); // 25 Nov 2026, 15:30 local
+  assert.equal(sinceMs('any', now), 0);
+  assert.equal(sinceMs('today', now), new Date(2026, 10, 25).getTime());
+  assert.equal(sinceMs('yesterday', now), new Date(2026, 10, 24).getTime());
+  assert.equal(sinceMs('24h', now), now - 86400000);
+  assert.equal(sinceMs('2w', now), now - 14 * 86400000);
+  assert.equal(sinceMs('1m', now), new Date(2026, 9, 25, 15, 30).getTime());
+  assert.equal(sinceMs('2026-11-01', now), new Date(2026, 10, 1).getTime());
+  assert.throws(() => sinceMs('lastweek', now), /can't read date/);
+  const list = [{ updatedAt: now - 3600000 }, { updatedAt: now - 3 * 86400000 }, { updatedAt: 0 }];
+  assert.equal(filterSince(list, '24h', now).length, 1);
+  assert.equal(filterSince(list, '7d', now).length, 2);
+  assert.equal(filterSince(list, 'any', now).length, 3);
+  assert.equal(parseArgs(['list', '--since', '7d']).since, '7d');
+  assert.equal(parseArgs(['-t']).since, 'today');
+  assert.throws(() => parseArgs(['--since', 'soon']), /can't read date/);
+
+  // Fixture sessions are from January 2026, so "today" empties the list and "any" brings it back.
+  const { sessions } = scan();
+  const stdin = Object.assign(new EventEmitter(), { setRawMode() {}, resume() {}, pause() {} });
+  let screen = '';
+  const stdout = Object.assign(new EventEmitter(), { columns: 120, rows: 30, write: (s) => { screen += s; } });
+  const p = pick(sessions, { stdin, stdout, since: '2026-01-10' });
+  assert.match(screen, /date:2026-01-10/);
+  screen = '';
+  stdin.emit('data', Buffer.from('\x14')); // ^T → today
+  assert.match(screen, /0 of 9 sessions.*date:today/);
+  for (let i = 0; i < 5; i++) stdin.emit('data', Buffer.from('\x14')); // wraps back to any
+  assert.match(screen, /9 sessions +agent:all date:any/);
+  stdin.emit('data', Buffer.from('\x1b'));
+  assert.equal((await p).action, 'quit');
+  const cliRes = cli(['list', '--since', '2026-01-10', '--json']);
+  assert.equal(cliRes.status, 0, cliRes.stderr);
 });

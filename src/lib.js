@@ -1,4 +1,4 @@
-// Programmatic API: `import { sessions } from '@pymite6941/tracker'`.
+// Programmatic API: `import { sessions } from '@clyde-ai/tracker'`.
 import { loadAgents } from './agents/index.js';
 import { collect } from './store.js';
 import { rank, deepMatch } from './search.js';

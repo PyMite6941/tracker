@@ -29,6 +29,8 @@ nav_order: 2
 |---|---|
 | `-a, --agent <names>` | Only these agents. Repeat the flag or comma-separate: `-a claude,codex`. |
 | `-H, --here` | Only sessions whose working directory is the current folder or below it. |
+| `-s, --since <when>` | Only sessions active since `today`, `yesterday`, `24h`, `7d`, `2w`, `3m` or a date like `2026-11-01`. In the picker this only sets the starting range; `Ctrl-T` changes it. |
+| `-t, --today` | Same as `--since today`. |
 | `-n, --limit <n>` | Rows to print in `list` (default 20). |
 | `--deep` | Also match words that appear only in assistant replies or tool output (reads full transcripts, so it's slower). |
 | `--all` | Include sessions agents mark as background: headless `claude -p` runs, Hermes cron/hidden/archived sessions. |

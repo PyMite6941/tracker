@@ -93,7 +93,10 @@ export function timeAgo(ms, now = Date.now()) {
   if (h < 48) return `${h}h ago`;
   const d = Math.round(h / 24);
   if (d < 60) return `${d}d ago`;
-  return new Date(ms).toISOString().slice(0, 10);
+  // Older: "Sep 5" this year, "Sep 2025" before that (fits the 8-column age field).
+  const dt = new Date(ms);
+  const mon = dt.toLocaleString('en-US', { month: 'short' });
+  return dt.getFullYear() === new Date(now).getFullYear() ? `${mon} ${dt.getDate()}` : `${mon} ${dt.getFullYear()}`;
 }
 
 // ---------- text ----------
@@ -152,13 +155,38 @@ let colorOn = !process.env.NO_COLOR && process.stdout.isTTY;
 export function setColor(on) { colorOn = on; }
 const wrap = (open, close) => (s) => (colorOn ? `\x1b[${open}m${s}\x1b[${close}m` : String(s));
 export const c = {
-  bold: wrap(1, 22), dim: wrap(2, 22), inverse: wrap(7, 27),
+  bold: wrap(1, 22), dim: wrap(2, 22), italic: wrap(3, 23), underline: wrap(4, 24), inverse: wrap(7, 27),
   red: wrap(31, 39), green: wrap(32, 39), yellow: wrap(33, 39), blue: wrap(34, 39),
   magenta: wrap(35, 39), cyan: wrap(36, 39), gray: wrap(90, 39),
 };
+/** 256-colour foreground / background (closes only that attribute, so they nest). */
+export const fg = (n) => wrap(`38;5;${n}`, 39);
+export const bg = (n) => wrap(`48;5;${n}`, 49);
+export const isColor = () => colorOn;
 
-const AGENT_COLORS = { claude: c.yellow, codex: c.green, gemini: c.blue, qwen: c.magenta, hermes: c.cyan };
-export function agentColor(name) { return AGENT_COLORS[name] || c.magenta; }
+/** Theme, taken from the logo: sky + teal on slate. */
+export const T = {
+  accent: fg(81), teal: fg(80), muted: fg(244), faint: fg(240), text: fg(253), warn: fg(221), ok: fg(114),
+  hit: (s) => (colorOn ? `\x1b[1;4;38;5;222m${s}\x1b[22;24;39m` : s), // search-term highlight
+  selBg: 236, chipBg: 237, keyBg: 238,
+};
+
+const HUES = { claude: 209, codex: 114, gemini: 75, qwen: 141, opencode: 221, cursor: 252, copilot: 177, hermes: 80, aider: 150 };
+const EXTRA_HUES = [168, 116, 186, 147, 210, 79, 183, 109];
+export function agentHue(name = '') {
+  if (HUES[name]) return HUES[name];
+  let h = 0;
+  for (const ch of name) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
+  return EXTRA_HUES[h % EXTRA_HUES.length];
+}
+export function agentColor(name) { return fg(agentHue(name)); }
+
+/** Wrap every case-insensitive occurrence of `terms` in an already width-fitted plain string. */
+export function highlight(s, terms) {
+  if (!colorOn || !terms?.length) return s;
+  const re = new RegExp(terms.map((t) => t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|'), 'gi');
+  return s.replace(re, (m) => T.hit(m));
+}
 
 // ---------- tiny glob ----------
 
