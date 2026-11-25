@@ -41,13 +41,19 @@ export default {
   detect: () => true, // can't know without looking in project folders
   files(ctx = {}) {
     const dirs = new Set([HOME, ...(ctx.cwds || []), ...((ctx.config?.aider?.roots) || []).map(expandHome)]);
-    const out = new Set(); // canonical paths, so C:\x and c:\x don't yield the same history twice
+    // Keyed case-insensitively where the filesystem is (Windows/macOS): some stores lowercase
+    // paths, and C:\x and c:\x must not yield the same history twice. A spelling with capitals
+    // beats an all-lowercase one (that one came from a store that folded it).
+    const fold = process.platform === 'win32' || process.platform === 'darwin';
+    const out = new Map();
     for (const d of dirs) {
       if (!d) continue;
-      const f = path.join(d, FILE);
-      if (fs.existsSync(f)) out.add(truePath(f));
+      const f = truePath(path.join(d, FILE));
+      const key = fold ? f.toLowerCase() : f;
+      const have = out.get(key);
+      if (have ? have === key && f !== key : fs.existsSync(f)) out.set(key, f);
     }
-    return [...out];
+    return [...out.values()];
   },
   parse: (file) => parseAider(file),
   resume: (s) => ({ command: 'aider', args: ['--restore-chat-history'], cwd: s.cwd }),
