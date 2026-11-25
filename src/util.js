@@ -38,10 +38,16 @@ export function isUnder(child, parent) {
   return c === pa || c.startsWith(pa + path.sep);
 }
 
-/** The path as it is actually spelled on disk (fixes drive/folder casing on Windows/macOS). */
+/**
+ * The path with its letter casing as spelled on disk (some stores lowercase it). Only casing is
+ * changed: if resolving would also follow a symlink or expand a short name, the input is kept.
+ */
 export function truePath(p) {
   if (!p) return p;
-  try { return fs.realpathSync.native(p); } catch { return p; }
+  try {
+    const real = fs.realpathSync.native(p);
+    return real.toLowerCase() === p.toLowerCase() ? real : p;
+  } catch { return p; }
 }
 
 export function exists(p) {
