@@ -80,7 +80,7 @@ export function pick(sessions, { query = '', agent = 'all', here = process.cwd()
     lines.push(`${c.cyan(' ❯')} ${st.query}${c.inverse(' ')}`);
     lines.push(c.dim('─'.repeat(W)));
 
-    const agentW = 7, ageW = 8, folderW = Math.min(26, Math.floor(W * 0.25));
+    const agentW = 8, ageW = 8, folderW = Math.min(26, Math.floor(W * 0.25));
     const titleW = W - 3 - agentW - 1 - ageW - 1 - folderW - 1;
     for (let r = 0; r < listH; r++) {
       const s = st.list[st.top + r];

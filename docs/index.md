@@ -15,7 +15,7 @@ Find and resume your AI coding-agent sessions by keyword or recency, across ever
 
 ---
 
-Coding agents each keep their own history, in their own format, scoped to the folder you started them in. Once you have a few dozen sessions across Claude Code, Codex, Gemini and Hermes, finding "the one where I was fixing the webhook" means remembering which agent, which folder and which id.
+Coding agents each keep their own history, in their own format, scoped to the folder you started them in. Once you have a few dozen sessions across Claude Code, OpenCode, Cursor, Aider and Hermes, finding "the one where I was fixing the webhook" means remembering which agent, which folder and which id.
 
 `tracker` reads every agent's session store, builds one index, and resumes the session you pick **in its original directory**.
 

@@ -1,7 +1,7 @@
 {
   "name": "@pymite6941/tracker",
-  "version": "0.1.0",
-  "description": "Find and resume your AI coding-agent sessions (Claude Code, Codex, Gemini CLI, Qwen Code, Hermes, or any agent you configure) by keyword or recency, from one CLI/TUI.",
+  "version": "0.2.0",
+  "description": "Find and resume your AI coding-agent sessions (Claude Code, Codex, Gemini CLI, Qwen Code, OpenCode, Cursor Agent, Copilot CLI, Aider, Hermes, or any agent you configure) by keyword or recency, from one CLI/TUI.",
   "type": "module",
   "bin": {
     "tracker": "bin/tracker.js",
@@ -38,7 +38,12 @@
     "resume",
     "history",
     "cli",
-    "tui"
+    "tui",
+    "opencode",
+    "cursor",
+    "aider",
+    "copilot",
+    "qwen"
   ],
   "author": "PyMite6941",
   "license": "MIT",

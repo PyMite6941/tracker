@@ -5,9 +5,14 @@ import claude from './claude.js';
 import codex from './codex.js';
 import gemini, { qwen } from './gemini.js';
 import { hermes } from './sqlite.js';
+import opencode from './opencode.js';
+import cursor from './cursor.js';
+import copilot from './copilot.js';
+import aider from './aider.js';
 import { customAgent, validateSpec } from './custom.js';
 
-export const BUILTINS = [claude, codex, gemini, qwen, hermes];
+// Aider stays last: it discovers its history files from the folders the other agents found.
+export const BUILTINS = [claude, codex, gemini, qwen, opencode, cursor, copilot, hermes, aider];
 
 export function readConfig(file = configPath()) {
   if (!fs.existsSync(file)) return { file, config: {}, errors: [] };
@@ -33,5 +38,5 @@ export function loadAgents({ config = readConfig() } = {}) {
     byName.set(spec.name, customAgent(spec));
   }
   const agents = [...byName.values()].filter((a) => !disabled.has(a.name));
-  return { agents, errors, configFile: config.file };
+  return { agents, errors, configFile: config.file, config: config.config };
 }

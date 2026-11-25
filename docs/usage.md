@@ -82,5 +82,8 @@ tracker list --json -n 100 | jq '.[] | select(.agent=="hermes") | .title'
 | `CLAUDE_CONFIG_DIR` | Claude Code config dir (default `~/.claude`). |
 | `CODEX_HOME` | Codex home (default `~/.codex`). |
 | `GEMINI_DIR` / `QWEN_DIR` | Gemini / Qwen data dir (default `~/.gemini`, `~/.qwen`). |
+| `OPENCODE_DATA_DIR` | OpenCode data dir holding `opencode.db` (default `$XDG_DATA_HOME/opencode` or `~/.local/share/opencode`). |
+| `CURSOR_DIR` | Cursor dir (default `~/.cursor`). |
+| `COPILOT_HOME` | Copilot CLI dir (default `~/.copilot`). |
 | `HERMES_HOME` | Hermes home (default `%LOCALAPPDATA%\hermes` on Windows, `~/.hermes` elsewhere). |
 | `NO_COLOR` | Disable colours. |

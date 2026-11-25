@@ -9,7 +9,7 @@ import { makeHome, withEnv, T0 } from './fixtures.js';
 import { loadAgents, readConfig } from '../src/agents/index.js';
 import { collect } from '../src/store.js';
 import { rank, deepMatch } from '../src/search.js';
-import { resumeSpec, shellLine } from '../src/resume.js';
+import { resumeSpec, shellLine, launchPlan } from '../src/resume.js';
 import { cleanPrompt } from '../src/agents/common.js';
 import { fit, strWidth, glob, toMs, isUnder } from '../src/util.js';
 import { parseKeys, pick } from '../src/tui.js';
@@ -30,8 +30,8 @@ const cli = (args, extraEnv = {}) => spawnSync(process.execPath, [BIN, ...args, 
 
 test('finds one session per built-in agent, newest first', () => {
   const { sessions, stats } = scan();
-  assert.deepEqual(sessions.map((s) => s.agent), ['hermes', 'gemini', 'codex', 'claude']);
-  assert.equal(stats.qwen.found, false);
+  assert.deepEqual(sessions.map((s) => s.agent), ['aider', 'qwen', 'copilot', 'cursor', 'opencode', 'hermes', 'gemini', 'codex', 'claude']);
+  assert.equal(stats.qwen.found, true);
   assert.ok(sessions.every((s, i) => i === 0 || sessions[i - 1].updatedAt >= s.updatedAt));
 });
 
@@ -91,7 +91,7 @@ test('search: AND semantics, title beats body, folder names count', () => {
   assert.equal(rank(sessions, 'navbar mobile')[0].agent, 'codex');
   assert.equal(rank(sessions, 'stripe navbar').length, 0);
   const pay = rank(sessions, 'payments').map((s) => s.agent).sort();
-  assert.deepEqual(pay, ['claude', 'hermes']);
+  assert.deepEqual(pay, ['claude', 'copilot', 'hermes', 'opencode']);
 });
 
 test('deep search reaches assistant text in files and sqlite', () => {
@@ -173,11 +173,66 @@ test('CLI: list, last --print, resume by keyword, show --json, agents --json', (
   assert.equal(show.agent, 'codex');
   assert.equal(show.text, undefined);
   const agents = JSON.parse(cli(['agents', '--json']).stdout);
-  assert.deepEqual(agents.filter((a) => a.found).map((a) => a.name).sort(), ['claude', 'codex', 'gemini', 'hermes']);
+  assert.deepEqual(agents.filter((a) => a.sessions > 0).map((a) => a.name).sort(), ['aider', 'claude', 'codex', 'copilot', 'cursor', 'gemini', 'hermes', 'opencode', 'qwen']);
   const bad = cli(['resume', 'nothing-matches-this']);
   assert.equal(bad.status, 1);
   assert.match(bad.stderr, /nothing matches/);
   assert.equal(cli(['--version']).stdout.trim(), JSON.parse(fs.readFileSync(new URL('../package.json', import.meta.url))).version);
+});
+
+test('opencode: placeholder title replaced, subagent + archived hidden, synthetic parts skipped', () => {
+  const oc = scan().sessions.filter((s) => s.agent === 'opencode');
+  assert.deepEqual(oc.map((s) => s.id), ['ses_main']);
+  assert.equal(oc[0].title, 'Make the emulators work for the koala app');
+  assert.equal(oc[0].model, 'big-pickle');
+  assert.equal(oc[0].cwd, path.normalize(H.proj));
+  assert.ok(!oc[0].text.includes('injected'));
+  assert.equal(scan({ all: true }).sessions.filter((s) => s.agent === 'opencode').length, 3);
+  const { sessions, agents } = scan();
+  withEnv(H.env, () => deepMatch(sessions, agents, 'walrus'));
+  assert.equal(rank(sessions, 'walrus')[0].id, 'ses_main');
+});
+
+test('cursor, copilot, qwen-jsonl, aider adapters', () => {
+  const { sessions, agents } = scan();
+  const by = Object.fromEntries(sessions.map((s) => [s.agent, s]));
+  assert.equal(by.cursor.id, 'eeee1111-0000-4000-8000-000000000001');
+  assert.equal(by.cursor.title, 'Navbar Refactor');
+  assert.equal(by.cursor.lastPrompt, 'add a dark mode toggle');
+  assert.equal(by.copilot.cwd, H.proj);
+  assert.equal(by.copilot.model, 'gpt-5');
+  assert.equal(by.copilot.firstPrompt, 'Write a Dockerfile for the payments api');
+  assert.equal(by.qwen.id, '9999aaaa-0000-4000-8000-000000000001');
+  assert.equal(by.qwen.cwd, H.web);
+  assert.equal(by.qwen.title, 'Add lazy loading to the gallery images');
+  assert.equal(by.aider.cwd, H.web);
+  assert.equal(by.aider.firstPrompt, 'write a sitemap generator');
+  assert.equal(by.aider.lastPrompt, 'also add robots.txt');
+  assert.equal(by.aider.model, 'ollama_chat/qwen2.5-coder:7b');
+  const cmd = (a) => { const r = resumeSpec(by[a], agents); return [r.command, ...r.args]; };
+  assert.deepEqual(cmd('cursor'), ['cursor-agent', '--resume', 'eeee1111-0000-4000-8000-000000000001']);
+  assert.deepEqual(cmd('copilot'), ['copilot', '--resume', 'ffff1111-0000-4000-8000-000000000001']);
+  assert.deepEqual(cmd('opencode'), ['opencode', '--session', 'ses_main']);
+  assert.deepEqual(cmd('qwen'), ['qwen', '--resume', '9999aaaa-0000-4000-8000-000000000001']);
+  assert.deepEqual(cmd('aider'), ['aider', '--restore-chat-history']);
+  // aider alone (no other agent scanned this run) still finds folders via the cache
+  const solo = withEnv(H.env, () => collect(agents.filter((a) => a.name === 'aider')));
+  assert.equal(solo.sessions.length, 1);
+});
+
+test('launchPlan: exe direct, cmd shim quoted through cmd.exe, unsafe args refused', () => {
+  const claudeExe = String.raw`C:\bin\claude.exe`;
+  const exe = launchPlan({ command: 'claude', args: ['--resume', 'abc'] }, { win: true, resolved: claudeExe });
+  assert.deepEqual([exe.file, ...exe.args], [claudeExe, '--resume', 'abc']);
+  const shim = String.raw`C:\Program Files\npm\gemini.cmd`;
+  const cmd = launchPlan({ command: 'gemini', args: ['--resume', 'a b'] }, { win: true, resolved: shim });
+  assert.deepEqual(cmd.args.slice(0, 3), ['/d', '/s', '/c']);
+  assert.equal(cmd.args[3], `""${shim}" --resume "a b""`);
+  assert.equal(cmd.opts.windowsVerbatimArguments, true);
+  assert.throws(() => launchPlan({ command: 'x', args: ['a&calc'] }, { win: true, resolved: String.raw`C:\x.cmd` }), /refusing/);
+  assert.throws(() => launchPlan({ command: 'nope', args: [] }, { win: false, resolved: '' }), /not on your PATH/);
+  const nix = launchPlan({ command: 'claude', args: ['a&b'] }, { win: false, resolved: '/usr/bin/claude' });
+  assert.deepEqual(nix.args, ['a&b']);
 });
 
 test('TUI: type, move, Enter resumes the highlighted session', async () => {
@@ -186,8 +241,8 @@ test('TUI: type, move, Enter resumes the highlighted session', async () => {
   let screen = '';
   const stdout = Object.assign(new EventEmitter(), { columns: 100, rows: 30, write: (s) => { screen += s; } });
   const p = pick(sessions, { stdin, stdout });
-  stdin.emit('data', Buffer.from('pay'));     // claude + hermes (payments-api folder)
-  assert.match(screen, /2\/4 sessions/);
+  stdin.emit('data', Buffer.from('pay'));     // every session in the payments-api folder
+  assert.match(screen, /4\/9 sessions/);
   stdin.emit('data', Buffer.from('\x1b[B'));  // down
   stdin.emit('data', Buffer.from('\r'));
   const res = await p;
@@ -202,7 +257,7 @@ test('TUI: Tab filters by agent, Esc quits', async () => {
   const stdout = Object.assign(new EventEmitter(), { columns: 100, rows: 30, write: (s) => { screen += s; } });
   const p = pick(sessions, { stdin, stdout });
   stdin.emit('data', Buffer.from('\t'));
-  assert.match(screen, /agent:claude/);
+  assert.match(screen, /1\/9 sessions +agent:aider/); // agents cycle alphabetically
   stdin.emit('data', Buffer.from('\x1b'));
   assert.equal((await p).action, 'quit');
 });

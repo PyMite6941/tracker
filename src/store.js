@@ -4,7 +4,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { cacheDir } from './util.js';
 
-const CACHE_VERSION = 3;
+const CACHE_VERSION = 4;
 const cacheFile = () => path.join(cacheDir(), 'index.json');
 
 function readCache() {
@@ -33,7 +33,7 @@ export function clearCache() {
  * Collect sessions from `agents`. Returns { sessions, warnings, stats }.
  * Each session: { agent, id, title, cwd, startedAt, updatedAt, messages, firstPrompt, lastPrompt, text, file? }
  */
-export function collect(agents, { all = false, noCache = false, onProgress } = {}) {
+export function collect(agents, { all = false, noCache = false, onProgress, config = {} } = {}) {
   const cache = noCache ? { version: CACHE_VERSION, files: {} } : readCache();
   const nextFiles = {};
   const sessions = [];
@@ -50,22 +50,28 @@ export function collect(agents, { all = false, noCache = false, onProgress } = {
         for (const s of agent.load({ all })) { sessions.push({ ...s, agent: agent.name }); st.sessions++; }
         continue;
       }
-      const files = agent.files();
+      // Folder-scoped agents (aider) look in every folder any agent has used, including ones
+      // only known from the cache when this run is filtered with --agent.
+      const cwds = new Set(sessions.map((x) => x.cwd));
+      for (const v of Object.values(cache.files)) if (v.s?.cwd) cwds.add(v.s.cwd);
+      for (const d of cache.dirs || []) cwds.add(d);
+      cwds.delete('');
+      const files = agent.files({ cwds: [...cwds], config });
       let announced = false;
       for (const [i, file] of files.entries()) {
         let stat;
-        try { stat = fs.statSync(file); } catch { continue; }
+        try { stat = agent.stamp ? agent.stamp(file) : (({ mtimeMs, size }) => ({ m: mtimeMs, z: size }))(fs.statSync(file)); } catch { continue; }
         const key = `${agent.name}\u0000${file}`;
         const hit = cache.files[key];
         let s;
-        if (hit && hit.m === stat.mtimeMs && hit.z === stat.size) { s = hit.s; st.cached++; }
+        if (hit && hit.m === stat.m && hit.z === stat.z) { s = hit.s; st.cached++; }
         else {
           if (onProgress && !announced && !hit && files.length - i > 20) { announced = true; onProgress(agent, files.length - i); }
           try { s = agent.parse(file); } catch (e) { warnings.push(`${agent.name}: ${path.basename(file)}: ${e.message}`); s = null; }
           st.parsed++;
           dirty = true;
         }
-        nextFiles[key] = { m: stat.mtimeMs, z: stat.size, s };
+        nextFiles[key] = { m: stat.m, z: stat.z, s };
         if (s && (all || !s.headless)) { sessions.push({ ...s, agent: agent.name, file }); st.sessions++; }
       }
     } catch (e) {
@@ -75,7 +81,9 @@ export function collect(agents, { all = false, noCache = false, onProgress } = {
   // Keep cache entries for agents that weren't scanned this run (e.g. --agent filter).
   const scanned = new Set(agents.map((a) => a.name));
   for (const [k, v] of Object.entries(cache.files)) if (!scanned.has(k.split('\u0000')[0])) nextFiles[k] = v;
-  if (dirty || Object.keys(nextFiles).length !== Object.keys(cache.files).length) writeCache({ version: CACHE_VERSION, files: nextFiles });
+  const dirs = new Set([...(cache.dirs || []), ...sessions.map((x) => x.cwd).filter(Boolean)]);
+  if (dirs.size !== (cache.dirs || []).length) dirty = true;
+  if (dirty || Object.keys(nextFiles).length !== Object.keys(cache.files).length) writeCache({ version: CACHE_VERSION, files: nextFiles, dirs: [...dirs] });
 
   const out = dedupe(sessions).sort((a, b) => b.updatedAt - a.updatedAt);
   return { sessions: out, warnings, stats };

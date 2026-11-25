@@ -14,7 +14,7 @@
 
 ---
 
-You've had forty Claude Code, Codex, Gemini and Hermes sessions this week, spread across twenty folders. You remember *what* you were doing ("the stripe webhook thing") but not *where* or *which agent*. `tracker` reads each agent's own session store, indexes them, and drops you back into the right one, in the right directory, with one keystroke.
+You've had forty Claude Code, OpenCode, Cursor, Aider and Hermes sessions this week, spread across twenty folders. You remember *what* you were doing ("the stripe webhook thing") but not *where* or *which agent*. `tracker` reads each agent's own session store, indexes them, and drops you back into the right one, in the right directory, with one keystroke.
 
 ```text
  tracker 12/202 sessions                                    agent:all  folder:any  sort:relevance
@@ -62,8 +62,12 @@ Useful flags: `-a claude,codex` (only these agents), `-H` (only sessions from th
 | Claude Code | `~/.claude/projects/*/*.jsonl` | `claude --resume <id>` |
 | OpenAI Codex CLI | `~/.codex/sessions/**/rollout-*.jsonl` | `codex resume <id>` |
 | Gemini CLI | `~/.gemini/tmp/*/chats/*.json` | `gemini --resume <id>` |
-| Qwen Code | `~/.qwen/tmp/*/chats/*.json` | `qwen --resume <id>` |
+| Qwen Code | `~/.qwen/projects/*/chats/*.jsonl` (and the older `tmp/` layout) | `qwen --resume <id>` |
+| OpenCode | `~/.local/share/opencode/opencode.db` (SQLite) | `opencode --session <id>` |
+| Cursor Agent CLI | `~/.cursor/chats/*/*/meta.json` | `cursor-agent --resume <id>` |
+| GitHub Copilot CLI | `~/.copilot/session-state/*.jsonl` | `copilot --resume <id>` |
 | Hermes Agent | `state.db` (SQLite) | `hermes --resume <id>` |
+| Aider | `.aider.chat.history.md` in each project folder | `aider --restore-chat-history` |
 | **Anything else** | JSONL, JSON or SQLite. [Describe it in config](https://pymite6941.github.io/tracker/custom-agents) | your command template |
 
 Each resume runs in the session's original working directory, so the agent finds its own history.

@@ -75,7 +75,7 @@ export function parseArgs(argv) {
 }
 
 function load(o) {
-  const { agents, errors, configFile } = loadAgents({ config: readConfig() });
+  const { agents, errors, configFile, config } = loadAgents({ config: readConfig() });
   for (const e of errors) process.stderr.write(c.yellow(`tracker: config: ${e}\n`));
   const known = new Set(agents.map((a) => a.name));
   for (const n of o.agents) if (!known.has(n)) throw new Error(`unknown agent "${n}" — known: ${[...known].join(', ')}`);
@@ -84,7 +84,7 @@ function load(o) {
     ? (agent, n) => process.stderr.write(c.dim(`indexing up to ${n} ${agent.label} transcripts (first run is slow; later runs only re-read what changed)…
 `))
     : undefined;
-  const res = collect(active, { all: o.all, noCache: o.noCache, onProgress });
+  const res = collect(active, { all: o.all, noCache: o.noCache, onProgress, config });
   if (process.env.TRACKER_DEBUG) for (const w of res.warnings) process.stderr.write(c.dim(`warn: ${w}\n`));
   let sessions = res.sessions;
   if (o.here) {
@@ -115,10 +115,10 @@ const publicView = (s) => {
 function printTable(list, total) {
   const W = Math.max(60, process.stdout.columns || 110);
   const folderW = Math.min(28, Math.floor(W * 0.22));
-  const titleW = W - 4 - 8 - 9 - folderW - 11;
+  const titleW = W - 4 - 9 - 9 - folderW - 11;
   list.forEach((s, i) => {
     process.stdout.write(
-      `${c.dim(String(i + 1).padStart(3))} ${agentColor(s.agent)(fit(s.agent, 7))} ${c.dim(fit(timeAgo(s.updatedAt), 8))} ` +
+      `${c.dim(String(i + 1).padStart(3))} ${agentColor(s.agent)(fit(s.agent, 8))} ${c.dim(fit(timeAgo(s.updatedAt), 8))} ` +
       `${fit(s.title, titleW)} ${c.gray(fit(shortPath(s.cwd), folderW))} ${c.dim(s.id.replace(/^local-/, '').slice(0, 8))}\n`);
   });
   if (!list.length) process.stdout.write(c.dim('no sessions found — run `tracker agents` to see what was detected\n'));

@@ -38,6 +38,12 @@ export function isUnder(child, parent) {
   return c === pa || c.startsWith(pa + path.sep);
 }
 
+/** The path as it is actually spelled on disk (fixes drive/folder casing on Windows/macOS). */
+export function truePath(p) {
+  if (!p) return p;
+  try { return fs.realpathSync.native(p); } catch { return p; }
+}
+
 export function exists(p) {
   try { fs.accessSync(p); return true; } catch { return false; }
 }
