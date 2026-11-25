@@ -8,7 +8,7 @@
   Find and resume your AI coding-agent sessions by keyword or recency, across every agent, from one CLI/TUI.
   <br>
   <a href="https://pymite6941.github.io/tracker/">Documentation</a> ·
-  <a href="https://www.npmjs.com/package/@clyde-ai/tracker">npm</a> ·
+  <a href="https://www.npmjs.com/package/@ai-clyde/tracker">npm</a> ·
   <a href="https://github.com/PyMite6941/tracker/issues">Issues</a>
 </p>
 
@@ -36,7 +36,7 @@ You've had forty Claude Code, OpenCode, Cursor, Aider and Hermes sessions this w
 ## Install
 
 ```sh
-npm install -g @clyde-ai/tracker     # gives you `tracker` (and the short alias `trk`)
+npm install -g @ai-clyde/tracker     # gives you `tracker` (and the short alias `trk`)
 ```
 
 Requires Node.js **22.13+** (it uses the built-in `node:sqlite`). No other dependencies.
@@ -103,7 +103,7 @@ See the [custom agents guide](https://pymite6941.github.io/tracker/custom-agents
 ## Programmatic use
 
 ```js
-import { sessions } from '@clyde-ai/tracker';
+import { sessions } from '@ai-clyde/tracker';
 const [best] = sessions({ query: 'stripe webhook' });
 console.log(best.title, best.resume); // "Stripe refund webhook", "cd … && claude --resume …"
 ```

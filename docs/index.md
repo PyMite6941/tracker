@@ -22,7 +22,7 @@ Coding agents each keep their own history, in their own format, scoped to the fo
 ## Install
 
 ```sh
-npm install -g @clyde-ai/tracker
+npm install -g @ai-clyde/tracker
 ```
 
 Needs Node.js 22.13 or newer. There are no other dependencies. You get two commands: `tracker` and its short alias `trk`.

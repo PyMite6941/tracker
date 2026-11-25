@@ -10,7 +10,7 @@ search_enabled: true
 heading_anchors: true
 aux_links:
   GitHub: https://github.com/PyMite6941/tracker
-  npm: https://www.npmjs.com/package/@clyde-ai/tracker
+  npm: https://www.npmjs.com/package/@ai-clyde/tracker
 aux_links_new_tab: true
 footer_content: MIT licensed. tracker only reads local files, and nothing leaves your machine.
 baseurl: /tracker

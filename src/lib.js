@@ -1,4 +1,4 @@
-// Programmatic API: `import { sessions } from '@clyde-ai/tracker'`.
+// Programmatic API: `import { sessions } from '@ai-clyde/tracker'`.
 import { loadAgents } from './agents/index.js';
 import { collect } from './store.js';
 import { rank, deepMatch } from './search.js';

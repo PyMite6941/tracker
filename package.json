@@ -1,5 +1,5 @@
 {
-  "name": "@clyde-ai/tracker",
+  "name": "@ai-clyde/tracker",
   "version": "0.2.0",
   "description": "Find and resume your AI coding-agent sessions (Claude Code, Codex, Gemini CLI, Qwen Code, OpenCode, Cursor Agent, Copilot CLI, Aider, Hermes, or any agent you configure) by keyword or recency, from one CLI/TUI.",
   "type": "module",
